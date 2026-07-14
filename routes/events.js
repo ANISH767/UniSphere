@@ -18,7 +18,7 @@ const buildInterestRegex = (interest) => new RegExp(interest.replace(/[.*+?^${}(
  * @desc    Get all events
  * @access  Protected (All roles)
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const events = await Event.find()
       .populate('organizer', 'name email role')

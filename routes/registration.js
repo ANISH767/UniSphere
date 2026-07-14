@@ -50,4 +50,20 @@ router.post('/', verifyToken, checkRole(['student']), async (req, res) => {
   }
 });
 
+// @route   GET /api/registration/me
+// @desc    Get all registrations for the logged in student
+// @access  Private (Student)
+router.get('/me', verifyToken, checkRole(['student']), async (req, res) => {
+  try {
+    const registrations = await Registration.find({ student: req.user.userId })
+      .populate('event', 'title date location category')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json(registrations);
+  } catch (error) {
+    console.error('Error fetching registrations:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
 module.exports = router;
