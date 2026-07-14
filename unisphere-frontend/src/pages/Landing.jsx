@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
-import { Calendar, Users, Sparkles, GraduationCap, ArrowRight, MapPin, Clock } from 'lucide-react';
+import { Calendar, Users, Sparkles, GraduationCap, ArrowRight, MapPin, Clock, Ticket, Bell, AlertCircle } from 'lucide-react';
 
 const API_BASE_URL = 'https://unisphere-api-9j0u.onrender.com';
 
@@ -29,23 +29,68 @@ const getCategoryImage = (category) => {
 };
 
 export default function Landing() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+  const [announcementsError, setAnnouncementsError] = useState(false);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/events`);
-        // Slice top 8 events
         setEvents(response.data.slice(0, 8));
       } catch (error) {
         console.error("Error fetching live events:", error);
       } finally {
-        setLoading(false);
+        setEventsLoading(false);
       }
     };
+    
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/announcements`);
+        setAnnouncements(response.data.slice(0, 5));
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+        setAnnouncementsError(true);
+      } finally {
+        setAnnouncementsLoading(false);
+      }
+    };
+    
     fetchEvents();
+    fetchAnnouncements();
   }, []);
+
+  const handleRegister = async (eventId, e) => {
+    e.stopPropagation(); // prevent card click mapping to details if wrapped
+    const token = sessionStorage.getItem('token');
+    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+    
+    if (!token || !user) {
+      alert("Please log in as a student to join events.");
+      navigate('/login');
+      return;
+    }
+    
+    if (user.role !== 'student') {
+      alert("Only students can RSVP to events.");
+      return;
+    }
+    
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/events/${eventId}/register`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('Digital Pass successfully generated!\nYour Token: ' + response.data.passToken);
+    } catch (error) {
+      console.error("Error securing digital pass", error);
+      alert(error.response?.data?.message || 'Failed to complete registration');
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -56,8 +101,6 @@ export default function Landing() {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
   };
-
-  const displayEvents = events.length > 0 ? events : []; // Could put fallback DUMMY_EVENTS here if API is down
 
   return (
     <motion.div 
@@ -102,7 +145,7 @@ export default function Landing() {
         </nav>
 
         {/* Hero Section */}
-        <main className="max-w-7xl mx-auto px-6 pt-20 pb-32 text-center flex flex-col items-center">
+        <main className="max-w-7xl mx-auto px-6 pt-20 pb-20 text-center flex flex-col items-center">
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex flex-col items-center max-w-4xl">
             <motion.div variants={itemVariants} className="inline-flex items-center px-5 py-2.5 rounded-full bg-white/5 border border-white/10 text-indigo-300 text-xs font-black uppercase tracking-widest mb-10 backdrop-blur-xl shadow-2xl hover:bg-white/10 transition cursor-default">
               <Sparkles className="w-4 h-4 mr-2 text-indigo-400" /> Live Platform Active
@@ -128,6 +171,65 @@ export default function Landing() {
           </motion.div>
         </main>
 
+        {/* Notice Board Section */}
+        <section className="py-12 relative z-10 w-full max-w-7xl mx-auto px-6 mb-12">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-black text-white mb-2 flex items-center">
+                  <Bell className="w-8 h-8 mr-3 text-fuchsia-500" /> Latest Campus News
+                </h2>
+                <p className="text-slate-400 font-medium text-lg">Stay updated with important announcements and notices.</p>
+              </div>
+            </div>
+            
+            <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6 md:p-10 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-600/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                
+                {announcementsLoading ? (
+                    <div className="space-y-4">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5"></div>
+                        ))}
+                    </div>
+                ) : announcementsError ? (
+                    <div className="text-center py-12">
+                        <AlertCircle className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-slate-300 mb-2">Notice Board Offline</h3>
+                        <p className="text-slate-500">The announcements feed is currently unavailable. Please check back later.</p>
+                    </div>
+                ) : announcements.length === 0 ? (
+                    <div className="text-center py-12">
+                        <p className="text-slate-500">No new announcements at this time.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4 relative z-10">
+                        {announcements.map((ann, idx) => (
+                            <motion.div 
+                                key={idx}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.1 }}
+                                className="flex flex-col md:flex-row md:items-center p-5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-colors"
+                            >
+                                <div className="mb-3 md:mb-0 md:mr-6 flex-shrink-0">
+                                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest ${ann.urgent ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'}`}>
+                                        {ann.urgent ? 'Urgent Alert' : 'General Info'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-200 mb-1">{ann.title}</h4>
+                                    <p className="text-slate-400 text-sm">{ann.content}</p>
+                                </div>
+                                <div className="mt-3 md:mt-0 md:ml-auto flex-shrink-0 text-xs font-bold text-slate-500">
+                                    {new Date(ann.date).toLocaleDateString()}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </section>
+
         {/* Infinite Carousel Section */}
         <section className="py-20 relative z-10 w-full overflow-hidden bg-white/5 border-y border-white/10 backdrop-blur-3xl">
           <div className="max-w-7xl mx-auto px-6 mb-12 flex items-end justify-between">
@@ -143,36 +245,34 @@ export default function Landing() {
           </div>
 
           <div className="flex w-full relative min-h-[400px] items-center">
-            {loading ? (
+            {eventsLoading ? (
               <div className="w-full flex justify-center text-indigo-400 font-medium">Loading live events...</div>
-            ) : displayEvents.length > 0 ? (
+            ) : events.length > 0 ? (
               <motion.div 
                 className="flex gap-6 px-6"
                 animate={{ x: ["0%", "-50%"] }}
-                transition={{ ease: "linear", duration: 30, repeat: Infinity }}
+                transition={{ ease: "linear", duration: 40, repeat: Infinity }}
               >
-                {/* Duplicate array for seamless infinite scrolling */}
-                {[...displayEvents, ...displayEvents, ...displayEvents].map((event, idx) => (
+                {[...events, ...events, ...events].map((event, idx) => (
                   <motion.div 
                     key={idx}
                     whileHover={{ y: -15, scale: 1.02 }}
-                    className="w-[320px] md:w-[400px] shrink-0 bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden backdrop-blur-md group hover:bg-white/10 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] hover:border-white/20 transition-all duration-300 relative cursor-pointer"
+                    className="w-[320px] md:w-[400px] shrink-0 bg-white/5 border border-white/10 rounded-[2rem] overflow-hidden backdrop-blur-md group hover:bg-white/10 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] hover:border-white/20 transition-all duration-300 relative"
                   >
                     <div className="h-56 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10 pointer-events-none"></div>
                       <img src={getCategoryImage(event.category)} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
                       <div className={`absolute top-5 right-5 z-20 px-4 py-1.5 bg-gradient-to-r ${getCategoryColor(event.category)} rounded-full text-xs font-black text-white shadow-lg uppercase tracking-wider`}>
                         {event.category || 'General'}
                       </div>
                       
-                      <div className="absolute bottom-5 left-5 z-20 w-[80%]">
+                      <div className="absolute bottom-5 left-5 z-20 w-[80%] pointer-events-none">
                           <h3 className="text-xl md:text-2xl font-bold text-white leading-tight mb-1 group-hover:text-indigo-300 transition-colors">{event.title}</h3>
                       </div>
                     </div>
                     
-                    {/* Hover Reveal Metadata */}
-                    <div className="p-6">
-                      <div className="space-y-4">
+                    <div className="p-6 flex flex-col h-[calc(100%-14rem)] bg-white/5 border-t border-white/5">
+                      <div className="space-y-4 mb-6 flex-grow">
                         <div className="flex items-center text-sm font-medium text-slate-300">
                           <Calendar className="w-4 h-4 mr-3 text-indigo-400 shrink-0" /> 
                           {new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -184,6 +284,13 @@ export default function Landing() {
                           <MapPin className="w-4 h-4 mr-3 text-blue-400 shrink-0" /> {event.location}
                         </div>
                       </div>
+                      
+                      <button 
+                          onClick={(e) => handleRegister(event._id, e)}
+                          className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black tracking-widest uppercase text-xs rounded-xl flex items-center justify-center transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] z-30 relative"
+                      >
+                         <Ticket className="w-4 h-4 mr-2" /> Join Event
+                      </button>
                     </div>
                     
                     <div className="absolute inset-0 border-2 border-transparent group-hover:border-indigo-500/50 rounded-[2rem] transition duration-500 pointer-events-none"></div>
