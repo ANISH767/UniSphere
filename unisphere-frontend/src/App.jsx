@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
@@ -10,12 +11,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Landing from './pages/Landing';
 import SidebarLayout from './components/SidebarLayout';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col">
-
-        <Routes>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col overflow-hidden">
+      <AnimatePresence mode="wait">
+        <Routes key={location.pathname} location={location}>
           {/* Landing Page Route */}
           <Route path="/" element={<Landing />} />
 
@@ -31,10 +32,16 @@ function App() {
             <Route path="/events/:id" element={<EventDetails />} />
             <Route path="/profile" element={<Profile />} />
           </Route>
-
         </Routes>
+      </AnimatePresence>
+    </div>
+  );
+}
 
-      </div>
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { UserPlus, Mail, Lock, User, GraduationCap, Brain, ArrowLeft, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 function Signup() {
     const [name, setName] = useState('');
@@ -36,7 +37,13 @@ function Signup() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <motion.div 
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 absolute inset-0 z-50 overflow-y-auto"
+        >
             <div className="sm:mx-auto sm:w-full sm:max-w-md">
                 <div className="flex justify-center mb-6">
                     <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-full shadow-lg">
@@ -173,7 +180,7 @@ function Signup() {
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 }
 

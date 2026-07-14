@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import QRCode from 'react-qr-code';
+import { QRCodeSVG } from 'qrcode.react';
 import { Calendar, MapPin, Clock, Ticket, Sparkles, CheckCircle, Navigation, Trophy, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
 import studentProfile from '../assets/student_profile.png';
@@ -10,6 +10,7 @@ export default function StudentDashboard() {
     const [events, setEvents] = useState([]);
     const [recommendedEvents, setRecommendedEvents] = useState([]);
     const [activePasses, setActivePasses] = useState({});
+    const [digitalPasses, setDigitalPasses] = useState([]);
     const [userId, setUserId] = useState('');
     const [userName, setUserName] = useState('Student');
     const token = sessionStorage.getItem('token');
@@ -28,7 +29,19 @@ export default function StudentDashboard() {
         }
         fetchEvents();
         fetchRecommendations();
+        fetchDigitalPasses();
     }, [token]);
+
+        const fetchDigitalPasses = async () => {
+        try {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/registration/me', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setDigitalPasses(response.data);
+        } catch (error) {
+            console.error("Error fetching digital passes", error);
+        }
+    };
 
     const fetchEvents = async () => {
         try {
@@ -137,7 +150,7 @@ export default function StudentDashboard() {
                 <div className="mt-auto">
                     {activePasses[event._id] ? (
                         <div className="flex flex-col items-center bg-indigo-50 p-4 rounded-2xl border border-indigo-100 group-hover:bg-indigo-100 transition-colors">
-                            <QRCode value={activePasses[event._id]} size={80} className="mb-3 shadow-md rounded-lg p-1 bg-white" />
+                            <QRCodeSVG value={activePasses[event._id]} size={80} className="mb-3 shadow-md rounded-lg p-1 bg-white" />
                             <p className="text-[10px] text-indigo-600 font-black uppercase tracking-widest">Digital Pass</p>
                         </div>
                     ) : (
@@ -217,6 +230,64 @@ export default function StudentDashboard() {
                     </div>
                 </div>
             </div>
+
+            
+            {/* Digital Passes Section */}
+            {digitalPasses.length > 0 && (
+                <div className="mb-12">
+                    <div className="flex items-center justify-between mb-8">
+                        <h2 className="text-2xl font-black text-slate-900 flex items-center tracking-tight">
+                            <Ticket className="w-6 h-6 mr-3 text-fuchsia-600" /> My Digital Passes
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {digitalPasses.map(pass => (
+                            <motion.div 
+                                key={pass._id}
+                                whileHover={{ scale: 1.02, y: -5 }}
+                                className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2rem] p-1 shadow-xl flex flex-col relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                                <div className="bg-white rounded-[1.8rem] p-6 h-full flex flex-col relative z-10">
+                                    <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-4 border-dashed">
+                                        <div>
+                                            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest bg-gradient-to-r ${getCategoryColor(pass.event?.category)} mb-3`}>
+                                                {pass.event?.category || 'General'}
+                                            </span>
+                                            <h3 className="text-xl font-black text-slate-900 leading-tight mb-2">{pass.event?.title}</h3>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-3 mb-6 flex-grow">
+                                        <div className="flex items-center text-sm font-bold text-slate-600">
+                                            <Calendar className="w-4 h-4 mr-3 text-indigo-400" />
+                                            {pass.event?.date ? new Date(pass.event.date).toLocaleDateString() : 'TBD'}
+                                        </div>
+                                        <div className="flex items-center text-sm font-bold text-slate-600">
+                                            <MapPin className="w-4 h-4 mr-3 text-fuchsia-400" />
+                                            {pass.event?.location || 'TBD'}
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-auto pt-4 border-t border-slate-100 border-dashed flex items-center justify-between">
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Access Token</p>
+                                            <p className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md max-w-[120px] truncate">{pass.attendanceToken}</p>
+                                        </div>
+                                        <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
+                                            <QRCodeSVG value={pass.attendanceToken} size={64} />
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Ticket Notches */}
+                                    <div className="absolute -left-3 top-[65%] w-6 h-6 bg-indigo-50 rounded-full shadow-inner"></div>
+                                    <div className="absolute -right-3 top-[65%] w-6 h-6 bg-indigo-50 rounded-full shadow-inner"></div>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-12">
                 
