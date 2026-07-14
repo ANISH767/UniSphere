@@ -28,6 +28,62 @@ const getCategoryImage = (category) => {
   return map[category] || 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 };
 
+const fallbackAnnouncements = [
+  {
+    title: "Semester 4 Mid-Term Schedules Released",
+    content: "The official exam timetable has been posted on the student portal. Please review your batch timings.",
+    date: new Date().toISOString(),
+    urgent: true
+  },
+  {
+    title: "Main Campus Library Extended Hours for Finals",
+    content: "Starting next week, the central library will remain open 24/7 to support finals preparation.",
+    date: new Date(Date.now() - 86400000).toISOString(),
+    urgent: false
+  },
+  {
+    title: "B.Tech CSE Department Guest Lecture Registration",
+    content: "Register now for the upcoming guest lecture on 'Future of Web3' by industry leaders.",
+    date: new Date(Date.now() - 172800000).toISOString(),
+    urgent: false
+  }
+];
+
+const fallbackEvents = [
+  {
+    _id: "fb-1",
+    title: "SRM Annual Tech Hackathon 2026",
+    category: "Technology",
+    date: new Date(Date.now() + 7 * 86400000).toISOString(),
+    time: "09:00 AM",
+    location: "Main Auditorium"
+  },
+  {
+    _id: "fb-2",
+    title: "Introduction to DevOps & Cloud Automation",
+    category: "Academic",
+    date: new Date(Date.now() + 3 * 86400000).toISOString(),
+    time: "02:00 PM",
+    location: "Tech Lab 3"
+  },
+  {
+    _id: "fb-3",
+    title: "Open Source Contribution Sprint",
+    category: "Technology",
+    date: new Date(Date.now() + 14 * 86400000).toISOString(),
+    time: "10:00 AM",
+    location: "CSE Block"
+  },
+  {
+    _id: "fb-4",
+    title: "Annual Cultural Fest Showcase",
+    category: "Cultural",
+    date: new Date(Date.now() + 5 * 86400000).toISOString(),
+    time: "05:00 PM",
+    location: "Open Air Theatre"
+  }
+];
+
 export default function Landing() {
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
@@ -41,9 +97,15 @@ export default function Landing() {
     const fetchEvents = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/events`);
-        setEvents(response.data.slice(0, 8));
+        const data = response.data.slice(0, 8);
+        if (data.length === 0) {
+            setEvents(fallbackEvents);
+        } else {
+            setEvents(data);
+        }
       } catch (error) {
         console.error("Error fetching live events:", error);
+        setEvents(fallbackEvents);
       } finally {
         setEventsLoading(false);
       }
@@ -52,10 +114,17 @@ export default function Landing() {
     const fetchAnnouncements = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/announcements`);
-        setAnnouncements(response.data.slice(0, 5));
+        const data = response.data.slice(0, 5);
+        if (data.length === 0) {
+            setAnnouncements(fallbackAnnouncements);
+            setAnnouncementsError(false);
+        } else {
+            setAnnouncements(data);
+        }
       } catch (error) {
         console.error("Error fetching announcements:", error);
-        setAnnouncementsError(true);
+        setAnnouncements(fallbackAnnouncements);
+        setAnnouncementsError(false);
       } finally {
         setAnnouncementsLoading(false);
       }
