@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, Users, TrendingUp, Shield, Database, Activity, Clock, MapPin, CheckCircle, AlertTriangle, AlertCircle, Check, X, Terminal, BarChart3, Zap } from 'lucide-react';
+import { Calendar, Users, TrendingUp, Shield, Database, Activity, Clock, MapPin, CheckCircle, AlertTriangle, AlertCircle, Check, X, Terminal, BarChart3, Zap, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import adminProfile from '../assets/admin_profile.png';
 
@@ -8,6 +8,17 @@ export default function AdminDashboard() {
     const [events, setEvents] = useState([]);
     const [stats, setStats] = useState({ totalEvents: 0, totalAttendees: 0, topCategory: 'N/A' });
     const [heatmapData, setHeatmapData] = useState([]);
+    const [users, setUsers] = useState([]);
+
+    // Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', action: null });
+    
+    // Attendees Modal State
+    const [showAttendeesModal, setShowAttendeesModal] = useState(false);
+    const [attendeesList, setAttendeesList] = useState([]);
+    const [attendeesLoading, setAttendeesLoading] = useState(false);
+    const [modalEventTitle, setModalEventTitle] = useState('');
+
     const token = sessionStorage.getItem('token');
     
     const [userName, setUserName] = useState('Admin');
@@ -32,6 +43,7 @@ export default function AdminDashboard() {
     useEffect(() => {
         fetchSystemData();
         fetchHeatmapData();
+        fetchUsers();
 
         // Simulate live feed updates
         const interval = setInterval(() => {
@@ -47,6 +59,62 @@ export default function AdminDashboard() {
         }, 5000);
         return () => clearInterval(interval);
     }, []);
+
+    const fetchUsers = async () => {
+        try {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/users', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUsers(response.data);
+        } catch (error) {
+            console.error("Error fetching users", error);
+        }
+    };
+
+    const fetchAttendeesForEvent = async (eventId, eventTitle) => {
+        setModalEventTitle(eventTitle);
+        setShowAttendeesModal(true);
+        setAttendeesLoading(true);
+        try {
+            const response = await axios.get(`https://unisphere-api-9j0u.onrender.com/api/events/${eventId}/attendees`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAttendeesList(response.data);
+        } catch (error) {
+            console.error("Error fetching attendees:", error);
+            alert("Failed to load attendees.");
+        } finally {
+            setAttendeesLoading(false);
+        }
+    };
+
+    const handleDeleteEvent = async (eventId) => {
+        try {
+            await axios.delete(`https://unisphere-api-9j0u.onrender.com/api/events/${eventId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchSystemData();
+            setLiveFeed(prev => [{ id: Date.now(), time: 'Just now', msg: 'Event deleted.', type: 'alert' }, ...prev].slice(0, 5));
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to delete event');
+        }
+    };
+
+    const handleDeleteUser = async (userId) => {
+        try {
+            await axios.delete(`https://unisphere-api-9j0u.onrender.com/api/users/${userId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchUsers();
+            setLiveFeed(prev => [{ id: Date.now(), time: 'Just now', msg: 'User removed from platform.', type: 'alert' }, ...prev].slice(0, 5));
+        } catch (error) {
+            alert(error.response?.data?.message || 'Failed to delete user');
+        }
+    };
+
+    const promptConfirm = (title, message, action) => {
+        setConfirmModal({ show: true, title, message, action });
+    };
 
     const fetchSystemData = async () => {
         try {
@@ -347,29 +415,75 @@ export default function AdminDashboard() {
                                                     <Users className="w-4 h-4 mr-2" /> {event.attendees?.length || 0}
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-5 text-center flex flex-col items-center justify-center space-y-2">
-                                                {event.status === 'Pending' ? (
-                                                    <div className="flex space-x-2">
-                                                        <button onClick={() => handleStatusUpdate(event._id, 'Approved')} className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 px-4 py-2 rounded-xl text-xs font-bold border border-emerald-500/30 transition flex items-center shadow-lg hover:scale-105">
-                                                            <Check className="w-3.5 h-3.5 mr-1" /> Approve
+                                            <td className="px-8 py-5">
+                                                <div className="flex flex-col space-y-2 w-full max-w-[200px] mx-auto">
+                                                    {event.status === 'Pending' && (
+                                                        <div className="flex space-x-2">
+                                                            <button onClick={() => handleStatusUpdate(event._id, 'Approved')} className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 py-2 rounded-xl text-xs font-bold border border-emerald-500/30 transition flex items-center justify-center">
+                                                                <Check className="w-3.5 h-3.5 mr-1" /> Approve
+                                                            </button>
+                                                            <button onClick={() => handleStatusUpdate(event._id, 'Rejected')} className="flex-1 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 py-2 rounded-xl text-xs font-bold border border-rose-500/30 transition flex items-center justify-center">
+                                                                <X className="w-3.5 h-3.5 mr-1" /> Reject
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex space-x-2 w-full">
+                                                        <button onClick={() => fetchAttendeesForEvent(event._id, event.title)} className="flex-1 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-500/30 transition flex items-center justify-center">
+                                                            <Users className="w-3.5 h-3.5 mr-1.5" /> Attendees
                                                         </button>
-                                                        <button onClick={() => handleStatusUpdate(event._id, 'Rejected')} className="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 px-4 py-2 rounded-xl text-xs font-bold border border-rose-500/30 transition flex items-center shadow-lg hover:scale-105">
-                                                            <X className="w-3.5 h-3.5 mr-1" /> Reject
+                                                        <button onClick={() => promptConfirm('Delete Event', `Are you sure you want to delete "${event.title}"? This action cannot be undone.`, () => handleDeleteEvent(event._id))} className="flex-1 bg-rose-900/40 hover:bg-rose-600/50 text-rose-300 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-900/50 transition flex items-center justify-center">
+                                                            <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
                                                         </button>
                                                     </div>
-                                                ) : event.status === 'Approved' ? (
-                                                    <span className="inline-flex items-center bg-emerald-500/10 text-emerald-400 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-black border border-emerald-500/20">
-                                                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Approved
-                                                    </span>
-                                                ) : event.status === 'Rejected' ? (
-                                                    <span className="inline-flex items-center bg-rose-500/10 text-rose-400 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-black border border-rose-500/20">
-                                                        <XCircle className="w-3.5 h-3.5 mr-1.5" /> Rejected
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-full text-[10px] uppercase tracking-widest font-black border border-indigo-500/20">
-                                                        Unknown
-                                                    </span>
-                                                )}
+                                                </div>
+                                            </td>
+                                        </motion.tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </motion.div>
+
+                {/* --- MASTER USER DIRECTORY --- */}
+                <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="mt-12 bg-[#12112A] rounded-3xl shadow-2xl border border-indigo-500/20 overflow-hidden">
+                    <div className="px-8 py-6 border-b border-indigo-500/20 bg-gradient-to-r from-[#17153B] to-[#12112A]">
+                        <h2 className="text-2xl font-black text-white flex items-center tracking-tight">
+                            <Users className="w-6 h-6 mr-3 text-indigo-400" /> Master User Directory
+                        </h2>
+                        <p className="text-sm text-indigo-300/70 mt-1">Platform user moderation and access control</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-slate-300">
+                            <thead className="bg-[#0A0915] border-b border-indigo-500/20 text-indigo-200">
+                                <tr>
+                                    <th className="px-8 py-5 font-black uppercase tracking-widest text-[10px]">Name</th>
+                                    <th className="px-8 py-5 font-black uppercase tracking-widest text-[10px]">Email</th>
+                                    <th className="px-8 py-5 font-black uppercase tracking-widest text-[10px]">Role</th>
+                                    <th className="px-8 py-5 font-black uppercase tracking-widest text-[10px] text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-indigo-500/10">
+                                {users.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="4" className="px-8 py-16 text-center text-slate-500">
+                                            <p className="text-lg font-medium">No users found.</p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    users.map((user, index) => (
+                                        <motion.tr key={user._id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + (index * 0.05) }} className="hover:bg-indigo-900/20 transition-colors group">
+                                            <td className="px-8 py-5 font-bold text-white group-hover:text-indigo-300 transition-colors">{user.name}</td>
+                                            <td className="px-8 py-5 text-indigo-200/70 font-medium">{user.email}</td>
+                                            <td className="px-8 py-5">
+                                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${user.role === 'admin' ? 'bg-fuchsia-900/50 text-fuchsia-300 border-fuchsia-800' : user.role === 'faculty' ? 'bg-blue-900/50 text-blue-300 border-blue-800' : 'bg-slate-800 text-slate-300 border-slate-700'}`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-5 text-center">
+                                                <button onClick={() => promptConfirm('Remove User', `Are you sure you want to completely remove "${user.name}" from the platform?`, () => handleDeleteUser(user._id))} className="bg-rose-900/40 hover:bg-rose-600/50 text-rose-300 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-rose-900/50 transition inline-flex items-center shadow-lg">
+                                                    <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Remove
+                                                </button>
                                             </td>
                                         </motion.tr>
                                     ))
@@ -380,6 +494,72 @@ export default function AdminDashboard() {
                 </motion.div>
 
             </div>
+
+            {/* --- MODALS --- */}
+            
+            {/* Confirm Modal */}
+            <AnimatePresence>
+                {confirmModal.show && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-[#12112A] rounded-3xl shadow-2xl border border-rose-500/30 p-8 max-w-md w-full z-10 overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+                            <h3 className="text-2xl font-black text-white mb-3 flex items-center"><AlertTriangle className="w-6 h-6 mr-3 text-rose-500" /> {confirmModal.title}</h3>
+                            <p className="text-indigo-200/80 mb-8 font-medium">{confirmModal.message}</p>
+                            <div className="flex space-x-4">
+                                <button onClick={() => setConfirmModal({ show: false, title: '', message: '', action: null })} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition">Cancel</button>
+                                <button onClick={() => { confirmModal.action(); setConfirmModal({ show: false, title: '', message: '', action: null }); }} className="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-3 rounded-xl font-bold transition shadow-[0_0_15px_rgba(225,29,72,0.4)]">Confirm</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Attendees Modal */}
+            <AnimatePresence>
+                {showAttendeesModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAttendeesModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                        <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-[#12112A] rounded-3xl shadow-2xl border border-indigo-500/30 p-8 max-w-2xl w-full max-h-[80vh] flex flex-col z-10 overflow-hidden">
+                            <button onClick={() => setShowAttendeesModal(false)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-800 transition"><X className="w-6 h-6 text-slate-400" /></button>
+                            <h3 className="text-2xl font-black text-white mb-2 flex items-center"><Users className="w-6 h-6 mr-3 text-indigo-400" /> Event Roster</h3>
+                            <p className="text-indigo-300/80 mb-6 font-bold">{modalEventTitle}</p>
+                            
+                            <div className="overflow-y-auto flex-grow bg-[#0A0915] rounded-2xl border border-indigo-500/20">
+                                {attendeesLoading ? (
+                                    <div className="p-8 text-center text-indigo-400 font-bold animate-pulse">Loading roster...</div>
+                                ) : attendeesList.length === 0 ? (
+                                    <div className="p-8 text-center text-indigo-400 font-bold">No students registered yet.</div>
+                                ) : (
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-[#17153B] border-b border-indigo-500/20 sticky top-0 z-10 backdrop-blur-md text-indigo-200">
+                                            <tr>
+                                                <th className="py-4 px-6 font-black uppercase tracking-widest text-[10px]">Name</th>
+                                                <th className="py-4 px-6 font-black uppercase tracking-widest text-[10px]">Email</th>
+                                                <th className="py-4 px-6 font-black uppercase tracking-widest text-[10px]">Role</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-indigo-500/10 text-slate-300">
+                                            {attendeesList.map(reg => (
+                                                <tr key={reg._id} className="hover:bg-indigo-900/20 transition-colors">
+                                                    <td className="py-3 px-6 font-bold text-white">{reg.student?.name}</td>
+                                                    <td className="py-3 px-6 font-medium text-indigo-200/70">{reg.student?.email}</td>
+                                                    <td className="py-3 px-6">
+                                                        <span className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-slate-300 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                                                            {reg.student?.role}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
         </div>
     );
 }

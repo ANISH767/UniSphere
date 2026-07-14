@@ -110,6 +110,30 @@ export default function FacultyDashboard() {
 
     const token = sessionStorage.getItem('token');
     const [userName, setUserName] = useState('Faculty');
+    
+    // Attendees Modal State
+    const [showAttendeesModal, setShowAttendeesModal] = useState(false);
+    const [attendeesList, setAttendeesList] = useState([]);
+    const [attendeesLoading, setAttendeesLoading] = useState(false);
+    const [modalEventTitle, setModalEventTitle] = useState('');
+
+    const fetchAttendeesForEvent = async (eventId, eventTitle) => {
+        setModalEventTitle(eventTitle);
+        setShowAttendeesModal(true);
+        setAttendeesLoading(true);
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/events/${eventId}/attendees`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setAttendeesList(response.data);
+        } catch (error) {
+            console.error("Error fetching attendees:", error);
+            alert("Failed to load attendees.");
+        } finally {
+            setAttendeesLoading(false);
+        }
+    };
+
 
     useEffect(() => {
         if (token) {
@@ -425,7 +449,7 @@ export default function FacultyDashboard() {
 
                                         {/* AI Forecast Section */}
                                         {forecast && (
-                                            <div className="mt-auto bg-gradient-to-r from-teal-50 to-emerald-50 p-5 rounded-2xl border border-teal-100 flex items-center shadow-inner group-hover:shadow-none transition-shadow">
+                                            <div className="mt-auto bg-gradient-to-r from-teal-50 to-emerald-50 p-5 rounded-2xl border border-teal-100 flex items-center shadow-inner group-hover:shadow-none transition-shadow mb-4">
                                                 <TrendingUp className="w-6 h-6 text-teal-600 mr-4 shrink-0" />
                                                 <div>
                                                     <p className="text-[10px] font-black text-teal-700 uppercase tracking-widest mb-0.5">AI Forecast</p>
@@ -433,6 +457,11 @@ export default function FacultyDashboard() {
                                                 </div>
                                             </div>
                                         )}
+                                        <div className={forecast ? '' : 'mt-auto'}>
+                                            <button onClick={() => fetchAttendeesForEvent(event._id, event.title)} className="w-full py-3.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-black rounded-xl transition flex justify-center items-center border border-emerald-200 uppercase tracking-widest text-xs">
+                                                <Users className="w-4 h-4 mr-2" /> View Attendees
+                                            </button>
+                                        </div>
                                     </motion.div>
                                 );
                             })
@@ -440,6 +469,56 @@ export default function FacultyDashboard() {
                     </motion.div>
                 </div>
             </div>
+
+
+            {/* Attendees Modal */}
+            <AnimatePresence>
+                {showAttendeesModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAttendeesModal(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                        <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative bg-white rounded-3xl shadow-2xl border border-emerald-100 p-8 max-w-2xl w-full max-h-[80vh] flex flex-col z-10 overflow-hidden">
+                            <button onClick={() => setShowAttendeesModal(false)} className="absolute top-6 right-6 p-2 rounded-full hover:bg-slate-100 transition"><XCircle className="w-6 h-6 text-slate-400" /></button>
+                            <h3 className="text-2xl font-black text-emerald-950 mb-2 flex items-center"><Users className="w-6 h-6 mr-3 text-emerald-600" /> Event Roster</h3>
+                            <p className="text-emerald-700 mb-6 font-bold">{modalEventTitle}</p>
+                            
+                            <div className="overflow-y-auto flex-grow bg-emerald-50/50 rounded-2xl border border-emerald-100">
+                                {attendeesLoading ? (
+                                    <div className="p-8 text-center text-emerald-600 font-bold animate-pulse">Loading roster...</div>
+                                ) : attendeesList.length === 0 ? (
+                                    <div className="p-8 text-center text-emerald-600 font-bold">No students registered yet.</div>
+                                ) : (
+                                    <table className="w-full text-left text-sm">
+                                        <thead className="bg-emerald-100/80 border-b border-emerald-200 sticky top-0 z-10 backdrop-blur-md">
+                                            <tr>
+                                                <th className="py-4 px-6 font-black uppercase tracking-widest text-[10px] text-emerald-900">Name</th>
+                                                <th className="py-4 px-6 font-black uppercase tracking-widest text-[10px] text-emerald-900">Email</th>
+                                                <th className="py-4 px-6 font-black uppercase tracking-widest text-[10px] text-emerald-900">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-emerald-100">
+                                            {attendeesList.map(reg => (
+                                                <tr key={reg._id} className="hover:bg-white transition-colors">
+                                                    <td className="py-3 px-6 font-bold text-emerald-950">{reg.student?.name}</td>
+                                                    <td className="py-3 px-6 font-medium text-emerald-700">{reg.student?.email}</td>
+                                                    <td className="py-3 px-6">
+                                                        {reg.checkedIn ? (
+                                                            <span className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-100 px-3 py-1.5 rounded-full"><CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Checked In</span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full"><Clock className="w-3.5 h-3.5 mr-1.5" /> Pending</span>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
         </div>
     );
 }
+

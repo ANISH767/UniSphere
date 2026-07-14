@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { Calendar, MapPin, Clock, Ticket, Sparkles, CheckCircle, Navigation, Trophy, Target } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import studentProfile from '../assets/student_profile.png';
 
 export default function StudentDashboard() {
@@ -11,6 +11,7 @@ export default function StudentDashboard() {
     const [recommendedEvents, setRecommendedEvents] = useState([]);
     const [activePasses, setActivePasses] = useState({});
     const [digitalPasses, setDigitalPasses] = useState([]);
+    const [expandedPassId, setExpandedPassId] = useState(null);
     const [userId, setUserId] = useState('');
     const [userName, setUserName] = useState('Student');
     const token = sessionStorage.getItem('token');
@@ -241,24 +242,28 @@ export default function StudentDashboard() {
                         </h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {digitalPasses.map(pass => (
+                        {digitalPasses.map(pass => {
+                            const isExpanded = expandedPassId === pass._id;
+                            return (
                             <motion.div 
                                 key={pass._id}
-                                whileHover={{ scale: 1.02, y: -5 }}
-                                className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2rem] p-1 shadow-xl flex flex-col relative overflow-hidden"
+                                layout
+                                onClick={() => setExpandedPassId(isExpanded ? null : pass._id)}
+                                whileHover={{ scale: isExpanded ? 1 : 1.02, y: isExpanded ? 0 : -5 }}
+                                className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2rem] p-1 shadow-xl flex flex-col relative overflow-hidden cursor-pointer"
                             >
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                                <div className="bg-white rounded-[1.8rem] p-6 h-full flex flex-col relative z-10">
-                                    <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-4 border-dashed">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+                                <motion.div layout className="bg-white rounded-[1.8rem] p-6 h-full flex flex-col relative z-10">
+                                    <motion.div layout className="flex justify-between items-start mb-4">
                                         <div>
                                             <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black text-white uppercase tracking-widest bg-gradient-to-r ${getCategoryColor(pass.event?.category)} mb-3`}>
                                                 {pass.event?.category || 'General'}
                                             </span>
                                             <h3 className="text-xl font-black text-slate-900 leading-tight mb-2">{pass.event?.title}</h3>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                     
-                                    <div className="space-y-3 mb-6 flex-grow">
+                                    <motion.div layout className="space-y-3 mb-2 flex-grow">
                                         <div className="flex items-center text-sm font-bold text-slate-600">
                                             <Calendar className="w-4 h-4 mr-3 text-indigo-400" />
                                             {pass.event?.date ? new Date(pass.event.date).toLocaleDateString() : 'TBD'}
@@ -267,24 +272,42 @@ export default function StudentDashboard() {
                                             <MapPin className="w-4 h-4 mr-3 text-fuchsia-400" />
                                             {pass.event?.location || 'TBD'}
                                         </div>
-                                    </div>
+                                    </motion.div>
 
-                                    <div className="mt-auto pt-4 border-t border-slate-100 border-dashed flex items-center justify-between">
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Access Token</p>
-                                            <p className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md max-w-[120px] truncate">{pass.attendanceToken}</p>
-                                        </div>
-                                        <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
-                                            <QRCodeSVG value={pass.attendanceToken} size={64} />
-                                        </div>
-                                    </div>
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.div 
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="mt-4 pt-6 border-t border-slate-200 border-dashed flex flex-col items-center justify-center">
+                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Your Digital Access Pass</p>
+                                                    <div className="bg-white p-3 rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.1)] border border-slate-100 mb-4">
+                                                        <QRCodeSVG value={pass.attendanceToken} size={120} />
+                                                    </div>
+                                                    <p className="text-xs font-mono font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                                                        Pass ID: {pass.attendanceToken.substring(0, 12).toUpperCase()}
+                                                    </p>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                    
+                                    {!isExpanded && (
+                                        <motion.div layout className="mt-auto pt-4 border-t border-slate-100 border-dashed flex items-center justify-center text-indigo-500 text-xs font-bold uppercase tracking-widest">
+                                            Click to Reveal Ticket
+                                        </motion.div>
+                                    )}
                                     
                                     {/* Ticket Notches */}
-                                    <div className="absolute -left-3 top-[65%] w-6 h-6 bg-indigo-50 rounded-full shadow-inner"></div>
-                                    <div className="absolute -right-3 top-[65%] w-6 h-6 bg-indigo-50 rounded-full shadow-inner"></div>
-                                </div>
+                                    <div className="absolute -left-4 top-[50%] -translate-y-1/2 w-6 h-6 bg-indigo-50 rounded-full shadow-inner pointer-events-none"></div>
+                                    <div className="absolute -right-4 top-[50%] -translate-y-1/2 w-6 h-6 bg-indigo-50 rounded-full shadow-inner pointer-events-none"></div>
+                                </motion.div>
                             </motion.div>
-                        ))}
+                        )})}
                     </div>
                 </div>
             )}
