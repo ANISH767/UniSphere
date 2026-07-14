@@ -21,9 +21,9 @@ function Login() {
                 password
             });
 
-            localStorage.setItem('token', response.data.token);
+            sessionStorage.setItem('token', response.data.token);
             if (response.data.user) {
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+                sessionStorage.setItem('user', JSON.stringify(response.data.user));
             }
 
             navigate('/dashboard');

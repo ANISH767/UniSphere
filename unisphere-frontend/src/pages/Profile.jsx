@@ -10,7 +10,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
         const res = await axios.get('https://unisphere-api-9j0u.onrender.com/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -31,7 +31,7 @@ const Profile = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
+      const token = sessionStorage.getItem('token');
       const interestsArray = formData.academicInterests
         .split(',')
         .map(i => i.trim())

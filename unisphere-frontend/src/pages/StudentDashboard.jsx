@@ -12,12 +12,12 @@ export default function StudentDashboard() {
     const [activePasses, setActivePasses] = useState({});
     const [userId, setUserId] = useState('');
     const [userName, setUserName] = useState('Student');
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     
     useEffect(() => {
         if (token) {
             try {
-                const user = JSON.parse(localStorage.getItem('user'));
+                const user = JSON.parse(sessionStorage.getItem('user'));
                 if (user) {
                     if (user.name) setUserName(user.name);
                     if (user.id || user._id) setUserId(user.id || user._id);

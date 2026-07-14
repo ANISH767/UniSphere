@@ -14,7 +14,7 @@ export default function Dashboard() {
     useEffect(() => {
         const fetchUserProfile = async () => {
             try {
-                const token = localStorage.getItem('token');
+                const token = sessionStorage.getItem('token');
 
                 if (!token) {
                     navigate('/login');
@@ -29,7 +29,7 @@ export default function Dashboard() {
                 setRole(res.data.role);
             } catch (err) {
                 console.error("Failed to sync role profile", err);
-                localStorage.removeItem('token');
+                sessionStorage.removeItem('token');
                 navigate('/login');
             } finally {
                 setLoading(false);

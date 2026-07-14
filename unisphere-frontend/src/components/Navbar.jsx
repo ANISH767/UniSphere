@@ -6,7 +6,7 @@ function Navbar() {
     const location = useLocation();
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
         navigate('/login');
     };
 

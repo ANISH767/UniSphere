@@ -12,7 +12,7 @@ export default function Events() {
     const [categoryFilter, setCategoryFilter] = useState('All');
     const [recommendedFilter, setRecommendedFilter] = useState(false);
     
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     useEffect(() => {
         fetchEvents();

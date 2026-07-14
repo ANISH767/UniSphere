@@ -8,7 +8,7 @@ function Clubs() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     useEffect(() => {
         fetchClubs();

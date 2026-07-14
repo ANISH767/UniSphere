@@ -108,13 +108,13 @@ export default function FacultyDashboard() {
     const [manualEventId, setManualEventId] = useState('');
     const [manualCheckinResult, setManualCheckinResult] = useState(null);
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const [userName, setUserName] = useState('Faculty');
 
     useEffect(() => {
         if (token) {
             try {
-                const user = JSON.parse(localStorage.getItem('user'));
+                const user = JSON.parse(sessionStorage.getItem('user'));
                 if (user && user.name) setUserName(user.name);
                 const tokenPayload = JSON.parse(atob(token.split('.')[1]));
                 setCurrentUserId(tokenPayload.userId);

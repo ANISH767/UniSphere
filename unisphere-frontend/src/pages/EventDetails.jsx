@@ -12,12 +12,12 @@ export default function EventDetails() {
     const [clusteredEvents, setClusteredEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [role, setRole] = useState(null);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     useEffect(() => {
         fetchEventDetails();
         fetchClusteredEvents();
-        const user = JSON.parse(localStorage.getItem('user'));
+        const user = JSON.parse(sessionStorage.getItem('user'));
         if (user) setRole(user.role);
     }, [id]);
 

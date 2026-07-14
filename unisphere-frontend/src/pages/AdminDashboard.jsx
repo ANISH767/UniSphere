@@ -8,7 +8,7 @@ export default function AdminDashboard() {
     const [events, setEvents] = useState([]);
     const [stats, setStats] = useState({ totalEvents: 0, totalAttendees: 0, topCategory: 'N/A' });
     const [heatmapData, setHeatmapData] = useState([]);
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     
     const [userName, setUserName] = useState('Admin');
     
@@ -21,7 +21,7 @@ export default function AdminDashboard() {
     useEffect(() => {
         if (token) {
             try {
-                const user = JSON.parse(localStorage.getItem('user'));
+                const user = JSON.parse(sessionStorage.getItem('user'));
                 if (user && user.name) setUserName(user.name);
             } catch (e) {
                 console.error(e);
