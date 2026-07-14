@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { LogIn, Mail, Lock, ArrowLeft } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://unisphere-api-9j0u.onrender.com';
 
 function Login() {
     const [email, setEmail] = useState('');

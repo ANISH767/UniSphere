@@ -18,7 +18,7 @@ function Signup() {
 
         try {
             // Send the new user data to your backend registration route
-            await axios.post('http://localhost:5000/api/auth/signup', {
+            await axios.post('https://unisphere-api-9j0u.onrender.com/api/auth/signup', {
                 name,
                 email,
                 password,

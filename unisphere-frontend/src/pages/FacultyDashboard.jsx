@@ -4,7 +4,7 @@ import { Search, MapPin, Calendar, Clock, Users, QrCode, Plus, CheckCircle, XCir
 import { motion, AnimatePresence } from 'framer-motion';
 import facultyProfile from '../assets/faculty_profile.png';
 
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://unisphere-api-9j0u.onrender.com';
 
 const DUMMY_ACADEMICS = [
   { 

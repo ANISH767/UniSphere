@@ -11,7 +11,7 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/auth/me', {
+        const res = await axios.get('https://unisphere-api-9j0u.onrender.com/api/auth/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUser(res.data);
@@ -38,7 +38,7 @@ const Profile = () => {
         .filter(i => i !== '');
 
       const res = await axios.put(
-        'http://localhost:5000/api/auth/profile',
+        'https://unisphere-api-9j0u.onrender.com/api/auth/profile',
         { name: formData.name, academicInterests: interestsArray },
         { headers: { Authorization: `Bearer ${token}` } }
       );

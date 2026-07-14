@@ -50,7 +50,7 @@ export default function AdminDashboard() {
 
     const fetchSystemData = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/events', {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/events', {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
 
     const fetchHeatmapData = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/analytics/admin', {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/analytics/admin', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setHeatmapData(response.data.heatmapData || []);
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
 
     const handleStatusUpdate = async (id, status) => {
         try {
-            await axios.patch(`http://localhost:5000/api/events/${id}/status`, { status }, {
+            await axios.patch(`https://unisphere-api-9j0u.onrender.com/api/events/${id}/status`, { status }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchSystemData();

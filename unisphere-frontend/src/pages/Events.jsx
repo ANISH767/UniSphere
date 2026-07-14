@@ -21,7 +21,7 @@ export default function Events() {
 
     const fetchEvents = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/events', {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/events', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Only show approved events if filtering by status, but backend returns all. We can filter if needed.
@@ -33,7 +33,7 @@ export default function Events() {
 
     const fetchRecommendations = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/events/recommendations', {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/events/recommendations', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const ids = new Set(response.data.map(e => e._id));

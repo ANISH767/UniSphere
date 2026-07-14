@@ -32,7 +32,7 @@ export default function StudentDashboard() {
 
     const fetchEvents = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/events', {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/events', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEvents(response.data);
@@ -43,7 +43,7 @@ export default function StudentDashboard() {
 
     const fetchRecommendations = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/events/recommendations', {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/events/recommendations', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setRecommendedEvents(response.data);
@@ -54,7 +54,7 @@ export default function StudentDashboard() {
 
     const handleRegister = async (eventId) => {
         try {
-            const response = await axios.post(`http://localhost:5000/api/events/${eventId}/register`, {}, {
+            const response = await axios.post(`https://unisphere-api-9j0u.onrender.com/api/events/${eventId}/register`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setActivePasses(prev => ({ ...prev, [eventId]: response.data.passToken }));

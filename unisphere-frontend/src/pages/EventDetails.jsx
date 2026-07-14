@@ -23,7 +23,7 @@ export default function EventDetails() {
 
     const fetchEventDetails = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/events/${id}`, {
+            const response = await axios.get(`https://unisphere-api-9j0u.onrender.com/api/events/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setEvent(response.data);
@@ -36,7 +36,7 @@ export default function EventDetails() {
 
     const fetchClusteredEvents = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/events/${id}/clustering`, {
+            const response = await axios.get(`https://unisphere-api-9j0u.onrender.com/api/events/${id}/clustering`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setClusteredEvents(response.data);
@@ -47,7 +47,7 @@ export default function EventDetails() {
 
     const handleRegister = async () => {
         try {
-            const response = await axios.post(`http://localhost:5000/api/events/${id}/register`, {}, {
+            const response = await axios.post(`https://unisphere-api-9j0u.onrender.com/api/events/${id}/register`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Digital Pass successfully generated!\nYour Token: ' + response.data.passToken);

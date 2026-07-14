@@ -16,7 +16,7 @@ function Clubs() {
 
     const fetchClubs = async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/clubs', {
+            const response = await axios.get('https://unisphere-api-9j0u.onrender.com/api/clubs', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setClubs(response.data);
@@ -28,7 +28,7 @@ function Clubs() {
     const handleCreateClub = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/clubs', {
+            await axios.post('https://unisphere-api-9j0u.onrender.com/api/clubs', {
                 name, description
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -43,7 +43,7 @@ function Clubs() {
 
     const handleJoinClub = async (clubId) => {
         try {
-            const response = await axios.post(`http://localhost:5000/api/clubs/${clubId}/join`, {}, {
+            const response = await axios.post(`https://unisphere-api-9j0u.onrender.com/api/clubs/${clubId}/join`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert(response.data.message);

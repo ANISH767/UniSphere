@@ -22,7 +22,7 @@ export default function Dashboard() {
                 }
 
                 // Fetching the profile to check if user role is student, faculty, or admin
-                const res = await axios.get('http://localhost:5000/api/auth/me', {
+                const res = await axios.get('https://unisphere-api-9j0u.onrender.com/api/auth/me', {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
